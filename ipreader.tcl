@@ -1,12 +1,13 @@
 #!/usr/bin/wish8.6 -f
-package require BLT 2.5
+package require BLT
 package require img::png
 package require img::tiff
 package require tiff
 package require png
 package require math::statistics
 #tcllib is required
-load /usr/local/Library/IPreader/libtiffread1[info sharedlibextension]
+set project_directory [file dirname [info script]]
+load [file join $project_directory tiffread1[info sharedlibextension]]
 #important: a released version must not have more than 3 characters for the version number
 #otherwise export to STOE raw will not work
 set gui(version) 1.8

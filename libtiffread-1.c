@@ -1,4 +1,4 @@
-#include <tcl8.6/tcl.h>
+#include <tcl.h>
 #include <tiffio.h>
 #include <stdlib.h>
 #include <math.h>
