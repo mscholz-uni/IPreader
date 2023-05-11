@@ -3074,6 +3074,7 @@ proc readimage {} {
     mousebindings
     set gui(picthumbh) [image height $gui(picth)]
     set gui(picthumbw) [image width $gui(picth)]
+    .main.topimage configure -width $gui(picthumbw) -height $gui(picthumbh)
     .status.msg configure -text "size (original): $gui(picw)\x$gui(pich)     size (screen): $gui(picthumbw)\x$gui(picthumbh)"
     wm title . "IP reader-$gui(version), filename:[lindex [file split $gui(filename)] end]"
   } else {
@@ -3485,6 +3486,20 @@ proc manualscale {} {
   }
 }
 
+
+proc configureMain {win width height} {
+  #puts "configureMain $win $width $height"
+  set graphwidth [expr $width-150]
+  set graphheight [expr $height/3-40]
+  set gui(imagewidth) $graphwidth
+  set gui(imageheight) $graphheight
+  $win.midgraph configure -width $graphwidth -height $graphheight
+  $win.botgraph configure -width $graphwidth -height $graphheight
+  $win.topimage configure -width $graphwidth -height $graphheight
+  bind .main <Configure> {}
+}
+
+
 proc maingui {} {
   global gui
   wm title . "IP reader-$gui(version), filename:[lindex [file split $gui(filename)] end]"
@@ -3617,6 +3632,8 @@ This program is free software; you can redistribute it and/or modify it under th
     drawdvalues 0
     drawdvalues 1
   }
+  bind .main <Configure> [list configureMain %W %w %h]
+  wm geometry . +0+0
 }
 ##############################
 #main program
