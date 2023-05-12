@@ -2259,7 +2259,211 @@ proc detavg {data} {
 }
 
 
-proc savediff {graphnumber} {
+
+proc get_minmax {graphnumber} {
+  global gui
+  set minint 9999999999999999
+  set maxint -9999999999999999
+  foreach x $gui(xdata1$graphnumber) y $gui(ydata$graphnumber) {
+    if {$minint > $y} {
+      set minint $y
+    }
+    if {$maxint < $y} {
+      set maxint $y
+    }
+  }
+  return [list $minint $maxint]
+}
+
+
+proc save_stoe_raw {graphnumber filename} {
+  global gui
+
+  set minmax [get_minmax $graphnumber]
+  set minint [lindex $minmax 0]
+  set maxint [lindex $minmax 1]
+
+  set thetabegin [lindex $gui(xdata1$graphnumber) 0]
+  set thetaend [lindex $gui(xdata1$graphnumber) end]
+  set thetastep [expr {[lindex $gui(xdata1$graphnumber) 1]-[lindex $gui(xdata1$graphnumber) 0]}]
+  set numberofpoints [llength $gui(ydata$graphnumber)]
+
+  file delete -force  $filename
+  set channel [open $filename a+]
+  fconfigure $channel -blocking 0 -translation binary
+  set fileformat "RAW_1.06RAWDAT"
+  puts -nonewline $channel [binary format A* $fileformat]
+  zerostochannel $channel 2
+  set timepoint [clock  seconds]
+#    set createdtime "02-Jan-14 15:25"
+  set createdtime [clock format $timepoint -format {%d-%b-%y %H:%M}]
+  puts -nonewline $channel [binary format A* $createdtime]
+  zerostochannel $channel 1
+  set title "powder sample"
+  puts -nonewline $channel [binary format A* [format %-79s $title]]
+  zerostochannel $channel 1
+  set comment "X-ray powder camera  Huber G621, image plate reader Typhoon7000, IPreader-$gui(version)"
+  puts -nonewline $channel [binary format A* [format %-79s $comment]]
+  zerostochannel $channel 115
+  set unknown 1000
+  puts -nonewline $channel [binary format s* $unknown]
+#monochromator
+#1:Secondary
+#2:Curved Germanium (111)
+#3:Curved Graphite (002)
+#4:Curved Quartz (101)
+#5:??
+#6:2x Ge(111)
+#7:2x Ge(220)
+#8:2x GeAs(400)
+#10:Unknown
+  set monochromator 2
+  puts -nonewline $channel [binary format c* $monochromator]
+  zerostochannel $channel 1
+#XRAY-tube
+#1:Ag
+#2:Mo
+#3:Cu
+#4:Co
+#5:Fe
+#6:Cr
+#7:nix
+#8:DYC
+#9:
+#10:C
+#11:YC
+#12:YC
+#13:
+  if {$gui(radiation)== "AgKalpha1"} {
+    set radiationelement 1
+  } elseif {$gui(radiation)== "MoKalpha1"} {
+    set radiationelement 2
+  } elseif {$gui(radiation)== "CuKalpha1"} {
+    set radiationelement 3
+  } elseif {$gui(radiation)== "CoKalpha1"} {
+    set radiationelement 4
+  } elseif {$gui(radiation)== "FeKalpha1"} {
+    set radiationelement 5
+  } elseif {$gui(radiation)== "CrKalpha1"} {
+    set radiationelement 6
+  } else {
+    set radiationelement 7
+  }
+  puts -nonewline $channel [binary format c* $radiationelement]
+  zerostochannel $channel 1
+#1: scintillation counter
+#2: curved PSD
+#3: linear PSD
+#4: unknown
+#5: Transmission
+#6: Reflection
+#7: Debye-Scherrer
+#8: unknown
+  set detector 2
+  puts -nonewline $channel [binary format c* $detector]
+  zerostochannel $channel 5
+  set generatorvoltage 50
+  puts -nonewline $channel [binary format c* $generatorvoltage]
+  zerostochannel $channel 1
+  set generatorcurrent 35
+  puts -nonewline $channel [binary format c* $generatorcurrent]
+  zerostochannel $channel 1
+  set radiation1 $gui(wavelength)
+  puts -nonewline $channel [binary format r* $radiation1]
+  set radiation2 1.79285
+  puts -nonewline $channel [binary format r* $radiation2]
+  zerostochannel $channel 28
+#1:Transmission
+#2:Reflection
+#3:Debye-Scherrer
+#4:Unknown
+#5:2Theta
+#6:Omega
+#7:2Theta:Omega
+#8:Independent
+  set scanmode 1
+  puts -nonewline $channel [binary format c* $scanmode]
+  zerostochannel $channel 1
+#1:2Theta
+#2:crash
+#3:2Theta:Omega
+#4:Independent
+  set scantype 1
+  puts -nonewline $channel [binary format c* $scantype]
+  zerostochannel $channel 17
+#number of ranges?
+  set unknown 1
+  puts -nonewline $channel [binary format c* $unknown]
+  zerostochannel $channel 51
+  set timepoint [clock  seconds]
+  set modifiedtime [clock format $timepoint -format {%d-%b-%y %H:%M}]
+  puts -nonewline $channel [binary format A* $modifiedtime]
+  zerostochannel $channel 1
+  set unknown "RAWDAT"
+  puts -nonewline $channel [binary format A* $unknown]
+  zerostochannel $channel 14
+  puts -nonewline $channel [binary format s* $numberofpoints]
+  zerostochannel $channel 2
+#1
+  set unknown 1
+  puts -nonewline $channel [binary format c* $unknown]
+  zerostochannel $channel 3
+#26
+  set unknown 26
+  puts -nonewline $channel [binary format c* $unknown]
+  zerostochannel $channel 1
+#26
+  set unknown 26
+  puts -nonewline $channel [binary format c* $unknown]
+  zerostochannel $channel 3
+#4
+  set unknown 4
+  puts -nonewline $channel [binary format c* $unknown]
+  zerostochannel $channel 15
+  puts -nonewline $channel [binary format c* $generatorcurrent]
+  zerostochannel $channel 1039
+#data collection
+  set starttime "unknown"
+  puts -nonewline $channel [binary format A* [format %-15s $starttime]]
+  zerostochannel $channel 1
+  set endtime "unknown"
+  puts -nonewline $channel [binary format A* [format %-15s $endtime]]
+  zerostochannel $channel 3
+  puts -nonewline $channel [binary format s* $numberofpoints]
+  zerostochannel $channel 2
+  set unknown 1
+  puts -nonewline $channel [binary format c* $unknown]
+  zerostochannel $channel 3
+  set unknown 16256
+  puts -nonewline $channel [binary format s* $unknown]
+  puts -nonewline $channel [binary format r* $thetabegin]
+  set omegabegin 3.5
+  puts -nonewline $channel [binary format r* $omegabegin]
+  puts -nonewline $channel [binary format r* $thetaend]
+  zerostochannel $channel 4
+  puts -nonewline $channel [binary format r* $thetastep]
+  set omegastep 0.0077
+  puts -nonewline $channel [binary format r* $omegastep]
+  set timeperstep 0.0
+  puts -nonewline $channel [binary format r* $timeperstep]
+  zerostochannel $channel 12
+  set unknown 293.15
+  puts -nonewline $channel [binary format r* $unknown]
+  zerostochannel $channel 32
+  puts -nonewline $channel [binary format s* [expr {int((32768-1)*$minint)}]]
+  zerostochannel $channel 2
+  puts -nonewline $channel [binary format s* [expr {int((32768-1)*$maxint)}]]
+  zerostochannel $channel 386
+  foreach y $gui(ydata$graphnumber) {
+    puts -nonewline $channel [binary format s* [expr {int((32768-1)*$y)}]]
+  }
+  zerostochannel $channel 484
+  eof   $channel
+  close $channel
+}
+
+
+proc save_gnuplot_dat {graphnumber filename} {
   global gui
   set output1 "#noise: $gui(noise$graphnumber)\n#averaged over $gui(yspread$graphnumber) points\n#avg int. $gui(avg$graphnumber)\n"
   append output1 "#number of data points [llength $gui(ydata$graphnumber)]\n"
@@ -2275,211 +2479,92 @@ proc savediff {graphnumber} {
     append output1 "# number of points in linear regression = $gui(numpoints)\n"
     append output1 "# \n"
   }
+  foreach x $gui(xdata1$graphnumber) y $gui(ydata$graphnumber) {
+    append output1 "$x $y \n"
+  }
+  string2file $output1 $filename
+}
+
+
+proc save_xy_file {graphnumber filename} {
+  global gui
   set output2 ""
-  set minint 9999999999999999
-  set maxint -9999999999999999
+  foreach x $gui(xdata1$graphnumber) y $gui(ydata$graphnumber) {
+    append output2 "$x $y \n"
+  }
+  string2file $output2 $filename
+}
+
+
+proc save_gsas_line {channel line} {
+  set length [string length $line]
+  if {$length > 80} {
+    puts $channel [string range $line 0 80]
+    puts "WARNING: string longer than 80 characters, chopping off"
+  } else {
+    puts $channel [string cat $line [string repeat " " [expr 80 - $length]]]
+  }
+}
+
+
+# type == ESD format YOT(i),YE(i)
+proc save_gsas_data {channel graphnumber maxint start stop} {
+  global gui
+  set outstr ""
+  for {set i $start} {$i < $stop} {incr i} {
+    set y [lindex $gui(ydata$graphnumber) $i]
+    set ys [expr 99999.0 * $y / $maxint]
+    append outstr [format "%8.1f%8.2f" $ys [expr sqrt($ys)]]
+  }
+  save_gsas_line $channel $outstr
+}
+
+
+# see "GSAS Technical Manual" section "GSAS Standard Powder Data File"
+proc save_gsas {graphnumber filename} {
+  global gui
+  set channel [open $filename w]
+  fconfigure $channel -encoding ascii -translation crlf
   set thetabegin [lindex $gui(xdata1$graphnumber) 0]
   set thetaend [lindex $gui(xdata1$graphnumber) end]
   set thetastep [expr {[lindex $gui(xdata1$graphnumber) 1]-[lindex $gui(xdata1$graphnumber) 0]}]
   set numberofpoints [llength $gui(ydata$graphnumber)]
-  foreach x $gui(xdata1$graphnumber) y $gui(ydata$graphnumber) ystdev $gui(ydatastdev$graphnumber) {
-    append output1 "$x $y $ystdev\n"
-    append output2 "$x $y \n"
-    if {$minint > $y} {
-      set minint $y
-    }
-    if {$maxint < $y} {
-      set maxint $y
-    }
+  set items_per_record 5
+  set nrec [expr int($numberofpoints / $items_per_record + 0.5)]
+  set bname [file rootname $filename]
+  set minmax [get_minmax $graphnumber]
+  save_gsas_line $channel "Huber G621 Typhoon7000 $bname"
+  save_gsas_line $channel [format "BANK%3d%9d%8d CONST %10.3f%10.4f%10.f%10.f ESD" 1 \
+      $numberofpoints $nrec \
+      [expr $thetabegin * 100] [expr $thetastep * 100] 0 0]
+  for {set rec 0} {$rec < $nrec} {incr rec} {
+    save_gsas_data $channel $graphnumber [lindex $minmax 1] [expr $rec * $items_per_record] [expr $rec * $items_per_record + $items_per_record]
   }
+  if {$numberofpoints % $items_per_record != 0} {
+    save_gsas_data $channel $graphnumber [lindex $minmax 1] [expr $nrec * $items_per_record] $numberofpoints
+  }
+  close $channel
+}
+
+
+proc savediff {graphnumber} {
+  global gui
   set types {
-    {{GNUPLOT Files}       {.dat}        }
-    {{XY Files}       {.xy}        }
-    {{STOE RAW files}       {.raw}        }
-    {{All Files}        *             }
+    {{GNUPLOT Files}       {.dat}       }
+    {{XY Files}            {.xy}        }
+    {{STOE RAW files}      {.raw}       }
+    {{GSAS  files}         {.gsas}      }
+    {{All Files}        *               }
   }
   set filename [tk_getSaveFile -filetypes $types -initialdir [file dirname $gui(filename)] -initialfile "[file root [lindex [file split $gui(filename)] end]]-$graphnumber"]
   if {$filename != "" && [file extension $filename] == ".xy"} {
-    string2file $output2 $filename
+    save_xy_file $graphnumber $filename
   } elseif {$filename != "" && [file extension $filename] == ".dat"} {
-    string2file $output1 $filename
+    save_gnuplot_dat $graphnumber $filename
   } elseif {$filename != "" && [file extension $filename] == ".raw"} {
-    file delete -force  $filename
-    set channel [open $filename a+]
-    fconfigure $channel -blocking 0 -translation binary
-    set fileformat "RAW_1.06RAWDAT"
-    puts -nonewline $channel [binary format A* $fileformat]
-    zerostochannel $channel 2
-    set timepoint [clock seconds]
-#    set createdtime "02-Jan-14 15:25"
-    set createdtime [clock format $timepoint -format {%d-%b-%y %H:%M}]
-    puts -nonewline $channel [binary format A* $createdtime]
-    zerostochannel $channel 1
-    set title "powder sample"
-    puts -nonewline $channel [binary format A* [format %-79s $title]]
-    zerostochannel $channel 1
-    set comment "X-ray powder camera  Huber G621, image plate reader Typhoon7000, IPreader-$gui(version)"
-    puts -nonewline $channel [binary format A* [format %-79s $comment]]
-    zerostochannel $channel 115
-    set unknown 1000
-    puts -nonewline $channel [binary format s* $unknown]
-#monochromator
-#1:Secondary
-#2:Curved Germanium (111)
-#3:Curved Graphite (002)
-#4:Curved Quartz (101)
-#5:??
-#6:2x Ge(111)
-#7:2x Ge(220)
-#8:2x GeAs(400)
-#10:Unknown
-    set monochromator 2
-    puts -nonewline $channel [binary format c* $monochromator]
-    zerostochannel $channel 1
-#XRAY-tube
-#1:Ag
-#2:Mo
-#3:Cu
-#4:Co
-#5:Fe
-#6:Cr
-#7:nix
-#8:DYC
-#9:
-#10:C
-#11:YC
-#12:YC
-#13:
-    if {$gui(radiation)== "AgKalpha1"} {
-      set radiationelement 1
-    } elseif {$gui(radiation)== "MoKalpha1"} {
-      set radiationelement 2
-    } elseif {$gui(radiation)== "CuKalpha1"} {
-      set radiationelement 3
-    } elseif {$gui(radiation)== "CoKalpha1"} {
-      set radiationelement 4
-    } elseif {$gui(radiation)== "FeKalpha1"} {
-      set radiationelement 5
-    } elseif {$gui(radiation)== "CrKalpha1"} {
-      set radiationelement 6
-    } else {
-      set radiationelement 7
-    }
-    puts -nonewline $channel [binary format c* $radiationelement]
-    zerostochannel $channel 1
-#1: scintillation counter
-#2: curved PSD
-#3: linear PSD
-#4: unknown
-#5: Transmission
-#6: Reflection
-#7: Debye-Scherrer
-#8: unknown
-    set detector 2
-    puts -nonewline $channel [binary format c* $detector]
-    zerostochannel $channel 5
-    set generatorvoltage 50
-    puts -nonewline $channel [binary format c* $generatorvoltage]
-    zerostochannel $channel 1
-    set generatorcurrent 35
-    puts -nonewline $channel [binary format c* $generatorcurrent]
-    zerostochannel $channel 1
-    set radiation1 $gui(wavelength)
-    puts -nonewline $channel [binary format r* $radiation1]
-    set radiation2 1.79285
-    puts -nonewline $channel [binary format r* $radiation2]
-    zerostochannel $channel 28
-#1:Transmission
-#2:Reflection
-#3:Debye-Scherrer
-#4:Unknown
-#5:2Theta
-#6:Omega
-#7:2Theta:Omega
-#8:Independent
-    set scanmode 1
-    puts -nonewline $channel [binary format c* $scanmode]
-    zerostochannel $channel 1
-#1:2Theta
-#2:crash
-#3:2Theta:Omega
-#4:Independent
-    set scantype 1
-    puts -nonewline $channel [binary format c* $scantype]
-    zerostochannel $channel 17
-#number of ranges?
-    set unknown 1
-    puts -nonewline $channel [binary format c* $unknown]
-    zerostochannel $channel 51
-    set timepoint [clock  seconds]
-    set modifiedtime [clock format $timepoint -format {%d-%b-%y %H:%M}]
-    puts -nonewline $channel [binary format A* $modifiedtime]
-    zerostochannel $channel 1
-    set unknown "RAWDAT"
-    puts -nonewline $channel [binary format A* $unknown]
-    zerostochannel $channel 14
-    puts -nonewline $channel [binary format s* $numberofpoints]
-    zerostochannel $channel 2
-#1
-    set unknown 1
-    puts -nonewline $channel [binary format c* $unknown]
-    zerostochannel $channel 3
-#26
-    set unknown 26
-    puts -nonewline $channel [binary format c* $unknown]
-    zerostochannel $channel 1
-#26
-    set unknown 26
-    puts -nonewline $channel [binary format c* $unknown]
-    zerostochannel $channel 3
-#4
-    set unknown 4
-    puts -nonewline $channel [binary format c* $unknown]
-    zerostochannel $channel 15
-    puts -nonewline $channel [binary format c* $generatorcurrent]
-    zerostochannel $channel 1039
-#data collection
-    set starttime "unknown"
-    puts -nonewline $channel [binary format A* [format %-15s $starttime]]
-    zerostochannel $channel 1
-    set endtime "unknown"
-    puts -nonewline $channel [binary format A* [format %-15s $endtime]]
-    zerostochannel $channel 3
-    puts -nonewline $channel [binary format s* $numberofpoints]
-    zerostochannel $channel 2
-    set unknown 1
-    puts -nonewline $channel [binary format c* $unknown]
-    zerostochannel $channel 3
-    set unknown 16256
-    puts -nonewline $channel [binary format s* $unknown]
-    puts -nonewline $channel [binary format r* $thetabegin]
-    set omegabegin 3.5
-    puts -nonewline $channel [binary format r* $omegabegin]
-    puts -nonewline $channel [binary format r* $thetaend]
-    zerostochannel $channel 4
-    puts -nonewline $channel [binary format r* $thetastep]
-    set omegastep 0.0077
-    puts -nonewline $channel [binary format r* $omegastep]
-    set timeperstep 0.0
-    puts -nonewline $channel [binary format r* $timeperstep]
-    zerostochannel $channel 12
-    set unknown 293.15
-    puts -nonewline $channel [binary format r* $unknown]
-    zerostochannel $channel 32
-#    puts -nonewline $channel [binary format s* [expr {int((32768-1)*$minint)}]]
-    set scale [expr {pow(2.0,$gui(bit))-1.0}]
-    puts -nonewline $channel [binary format s* [expr {int($minint/$scale*(32768-1))}]]
-    zerostochannel $channel 2
-#    puts -nonewline $channel [binary format s* [expr {int((32768-1)*$maxint)}]]
-    puts -nonewline $channel [binary format s* [expr {int($maxint/$scale*(32768-1))}]]
-    zerostochannel $channel 386
-    foreach y $gui(ydata$graphnumber) {
-#      puts -nonewline $channel [binary format s* [expr {int((32768-1)*$y)}]]
-      puts -nonewline $channel [binary format s* [expr {int($y/$scale*(32768-1))}]]
-    }
-    zerostochannel $channel 484
-    eof   $channel
-    close $channel
+    save_stoe_raw $graphnumber $filename
+  } elseif {$filename != "" && [file extension $filename] == ".gsas"} {
+    save_gsas $graphnumber $filename
   }
 }
 
