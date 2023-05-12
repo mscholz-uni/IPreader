@@ -3489,6 +3489,7 @@ proc manualscale {} {
 
 proc configureMain {win width height} {
   #puts "configureMain $win $width $height"
+  global gui
   set graphwidth [expr $width-150]
   set graphheight [expr $height/3-40]
   set gui(imagewidth) $graphwidth
@@ -3638,6 +3639,7 @@ This program is free software; you can redistribute it and/or modify it under th
 ##############################
 #main program
 maingui
+update idletasks
 
 if {[llength $argv]==1} {
   set gui(filename) [lindex $argv 0]
