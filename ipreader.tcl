@@ -2293,12 +2293,12 @@ proc savediff {graphnumber} {
     }
   }
   set types {
-    {{XY Files}       {.xy}        }
     {{GNUPLOT Files}       {.dat}        }
+    {{XY Files}       {.xy}        }
     {{STOE RAW files}       {.raw}        }
     {{All Files}        *             }
   }
-  set filename [tk_getSaveFile -filetypes $types -initialdir [file dirname $gui(filename)] -initialfile "[file root [lindex [file split $gui(filename)] end]]-$graphnumber.dat"]
+  set filename [tk_getSaveFile -filetypes $types -initialdir [file dirname $gui(filename)] -initialfile "[file root [lindex [file split $gui(filename)] end]]-$graphnumber"]
   if {$filename != "" && [file extension $filename] == ".xy"} {
     string2file $output2 $filename
   } elseif {$filename != "" && [file extension $filename] == ".dat"} {
