@@ -3028,19 +3028,15 @@ proc readimage {} {
     set gui(pic) [image create photo -file $gui(filename)]
 #png file
   } elseif {[file extension $gui(filename)] == ".png"} {
-    set pnginfo1 [exec [auto_execok pnginfo] $gui(filename)]
-    for {set i 0} {$i < [llength $pnginfo1]} {incr i} {
-      if {[lindex $pnginfo1 $i] == "Resolution:"} {
-        incr i
-        set gui(picres) [expr {1.0/[string trimright [lindex $pnginfo1 $i] ,]}]
-      } elseif {[lindex $pnginfo1 $i] == "Length:"} {
-        incr i
-        set pich [lindex $pnginfo1 $i]
-      } elseif {[lindex $pnginfo1 $i] == "Width:"} {
-        incr i
-        set picw [lindex $pnginfo1 $i]
-      }
+    array set pngdim [::png::getPixelDimension $gui(filename)]
+    if { [array size pngdim] == 0 } {
+      set gui(picres) [expr 0.01/400]
+    } else {
+      set gui(picres) [expr 1.0/$pngdim(ppux)]
     }
+    set gui(pic) [image create photo -file $gui(filename)]
+    set pich [image height $gui(pic)]
+    set picw [image width $gui(pic)]
     if {$pich > $picw} {
       if {[file exists "[file root $gui(filename)]-rot.png"]} {
         file delete "[file root $gui(filename)]-rot.png"
@@ -3053,8 +3049,8 @@ proc readimage {} {
       exec [auto_execok java] -jar /usr/share/java/ij.jar -Xmx1666m -batch macro.imj
 #      set gui(pic) [image create photo -gamma 0.1 -file "[file root $gui(filename)]-rot.png"]
       set gui(filename) "[file root $gui(filename)]-rot.png"
+      set gui(pic) [image create photo -file $gui(filename)]
     }
-    set gui(pic) [image create photo -file $gui(filename)]
   }
   if {$gui(filename) != ""} {
     if {[file extension $gui(filename)] == ".tif" || [file extension $gui(filename)] == ".tiff"} {
