@@ -2554,10 +2554,13 @@ proc savediff {graphnumber} {
     {{XY Files}            {.xy}        }
     {{STOE RAW files}      {.raw}       }
     {{GSAS  files}         {.gsas}      }
+    {{Maud files}          {.prn}       }
     {{All Files}        *               }
   }
   set filename [tk_getSaveFile -filetypes $types -initialdir [file dirname $gui(filename)] -initialfile "[file root [lindex [file split $gui(filename)] end]]-$graphnumber"]
   if {$filename != "" && [file extension $filename] == ".xy"} {
+    save_xy_file $graphnumber $filename
+  } elseif {$filename != "" && [file extension $filename] == ".prn"} {
     save_xy_file $graphnumber $filename
   } elseif {$filename != "" && [file extension $filename] == ".dat"} {
     save_gnuplot_dat $graphnumber $filename
